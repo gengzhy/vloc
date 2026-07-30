@@ -47,6 +47,7 @@ import com.vloc.ui.components.SearchBar
 import com.vloc.ui.components.SettingsDrawer
 import com.vloc.ui.map.AMapComposeView
 import com.vloc.util.AddressSearchUtil
+import com.vloc.util.AppUpdateUtil
 import com.vloc.util.GeoCoderUtil
 import com.vloc.util.MockLocationUtil
 import com.vloc.util.NetworkUtil
@@ -67,6 +68,9 @@ fun MainScreen(
     var menuExpanded by remember { mutableStateOf(false) }
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var latestRelease by remember { mutableStateOf<com.vloc.util.ReleaseInfo?>(null) }
+    var checkingUpdate by remember { mutableStateOf(false) }
 
     val latLng = vm.selectPoint.collectAsState().value
     var msg by remember {
@@ -312,16 +316,92 @@ fun MainScreen(
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
-                    Text(
-                        text = "Version " + stringResource(R.string.version),
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Version " + stringResource(R.string.version),
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                        TextButton(
+                            onClick = {
+                                if (checkingUpdate) return@TextButton
+                                checkingUpdate = true
+                                Thread {
+                                    val release = AppUpdateUtil.checkUpdate()
+                                    checkingUpdate = false
+                                    if (release != null && AppUpdateUtil.hasUpdate(context, release)) {
+                                        latestRelease = release
+                                        showUpdateDialog = true
+                                    } else {
+                                        (context as? android.app.Activity)?.runOnUiThread {
+                                            Toast.makeText(context, "已是最新版本", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }.start()
+                            },
+                            enabled = !checkingUpdate
+                        ) {
+                            Text(if (checkingUpdate) "检查中..." else "检查更新")
+                        }
+                    }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
                     Text("确定")
+                }
+            }
+        )
+    }
+
+    if (showUpdateDialog && latestRelease != null) {
+        val release = latestRelease!!
+        AlertDialog(
+            onDismissRequest = { showUpdateDialog = false },
+            title = { Text("发现新版本 ${release.tagName}") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "当前版本：${AppUpdateUtil.getCurrentVersionName(context)}",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        text = "最新版本：${release.tagName}",
+                        color = Color(0xFF00BCD4),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (release.body.isNotBlank()) {
+                        Text(
+                            text = "\n更新日志：",
+                            color = Color.Black,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = release.body,
+                            color = Color.DarkGray,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    AppUpdateUtil.downloadAndInstall(context, release.apkUrl)
+                    showUpdateDialog = false
+                    Toast.makeText(context, "开始下载，可在通知栏查看进度", Toast.LENGTH_LONG).show()
+                }) {
+                    Text("立即更新")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUpdateDialog = false }) {
+                    Text("稍后再说")
                 }
             }
         )
