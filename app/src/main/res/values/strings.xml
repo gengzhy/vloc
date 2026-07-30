@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">vloc</string>
+    <string name="author">ian</string>
+    <string name="version">0.0.1</string>
+    <string name="warning_title">温馨提示</string>
+    <string name="warning_content">本工具仅供技术学习及LBS应用测试，禁止用于虚假打卡、游戏作弊、虚假定位牟利、欺诈等违规违法场景！！使用产生一切风险与法律后果由使用者自行承担！！</string>
+</resources>
