@@ -4,11 +4,10 @@ import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
-import androidx.core.content.FileProvider
+import androidx.core.net.toUri
+import com.vloc.BuildConfig
 import org.json.JSONObject
-import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -85,22 +84,17 @@ object AppUpdateUtil {
         return code
     }
 
-    fun hasUpdate(context: Context, remote: ReleaseInfo): Boolean {
-        val currentCode = context.packageManager.getPackageInfo(context.packageName, 0).versionCode
-        return remote.versionCode > currentCode
+    fun hasUpdate(remote: ReleaseInfo): Boolean {
+        return remote.versionCode > BuildConfig.VERSION_CODE
     }
 
-    fun getCurrentVersionName(context: Context): String {
-        return try {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.0"
-        } catch (e: Exception) {
-            "1.0.0"
-        }
+    fun getCurrentVersionName(): String {
+        return BuildConfig.VERSION_NAME
     }
 
     fun downloadAndInstall(context: Context, apkUrl: String) {
-        val request = DownloadManager.Request(Uri.parse(apkUrl)).apply {
-            setTitle("Vloc 版本更新")
+        val request = DownloadManager.Request(apkUrl.toUri()).apply {
+            setTitle("vloc 版本更新")
             setDescription("正在下载新版本...")
             setDestinationInExternalFilesDir(
                 context,
@@ -121,7 +115,8 @@ object AppUpdateUtil {
                     val query = DownloadManager.Query().setFilterById(id)
                     val cursor = downloadManager.query(query)
                     if (cursor.moveToFirst()) {
-                        val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                        val status =
+                            cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
                         if (status == DownloadManager.STATUS_SUCCESSFUL) {
                             downloading = false
                             val uri = downloadManager.getUriForDownloadedFile(id)

@@ -321,7 +321,7 @@ fun MainScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Version " + stringResource(R.string.version),
+                            text = "Version " + AppUpdateUtil.getCurrentVersionName(),
                             color = Color.Gray,
                             fontSize = 14.sp
                         )
@@ -332,7 +332,7 @@ fun MainScreen(
                                 Thread {
                                     val release = AppUpdateUtil.checkUpdate()
                                     checkingUpdate = false
-                                    if (release != null && AppUpdateUtil.hasUpdate(context, release)) {
+                                    if (release != null && AppUpdateUtil.hasUpdate(release)) {
                                         latestRelease = release
                                         showUpdateDialog = true
                                     } else {
@@ -365,7 +365,7 @@ fun MainScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "当前版本：${AppUpdateUtil.getCurrentVersionName(context)}",
+                        text = "当前版本：${AppUpdateUtil.getCurrentVersionName()}",
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
