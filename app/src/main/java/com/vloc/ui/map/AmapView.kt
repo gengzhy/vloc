@@ -34,6 +34,7 @@ import com.amap.api.maps.model.MyLocationStyle
  *
  * @param initialPosition 初始化经纬度坐标
  * @param jumpToPosition 当此值变化时，地图视角跳转到该位置并打点（用于搜索结果定位）
+ * @param visible 是否可见（用于 Tab 保活显隐：隐藏时置 View.INVISIBLE，避免 alpha 对嵌入 View 不生效）
  * @param onMapClick 地图点击事件
  */
 @Composable
@@ -41,6 +42,7 @@ fun AMapComposeView(
     modifier: Modifier = Modifier,
     initialPosition: LatLng? = null,
     jumpToPosition: LatLng? = null,
+    visible: Boolean = true,
     onMapClick: (LatLng) -> Unit
 ) {
     val context = LocalContext.current
@@ -67,6 +69,8 @@ fun AMapComposeView(
 
     Box(modifier = modifier) {
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize(), update = { view ->
+            // Tab 隐藏时不绘制地图（View 级隐藏，Compose alpha 对嵌入 View 不生效）
+            view.visibility = if (visible) android.view.View.VISIBLE else android.view.View.INVISIBLE
             val aMap = view.map
 
             // 配置蓝点定位样式：持续显示方向箭头（compass 模式），保持视角跟随

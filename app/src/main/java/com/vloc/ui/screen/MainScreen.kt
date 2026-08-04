@@ -1,57 +1,48 @@
 package com.vloc.ui.screen
 
 import android.content.Context
-import android.content.Intent
-import android.location.LocationManager
-import android.provider.Settings
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.amap.api.maps.model.LatLng
+import androidx.compose.ui.zIndex
 import com.vloc.R
 import com.vloc.model.LocalViewModel
-import com.vloc.ui.components.ActionBar
-import com.vloc.ui.components.SearchBar
+import com.vloc.ui.components.MainBottomBar
+import com.vloc.ui.components.MainTab
 import com.vloc.ui.components.SettingsDrawer
-import com.vloc.ui.map.AMapComposeView
-import com.vloc.util.AddressSearchUtil
 import com.vloc.util.AppUpdateUtil
-import com.vloc.util.GeoCoderUtil
 import com.vloc.util.MockLocationUtil
-import com.vloc.util.NetworkUtil
+import com.vloc.util.ReleaseInfo
 
+/**
+ * 主容器：底部「首页 / 我的」双 Tab + 应用级浮层（设置抽屉、弹窗）。
+ * 双 Tab 同驻组合、显隐切换，地图等状态在切换时保活。
+ */
 @Composable
 fun MainScreen(
     vm: LocalViewModel,
@@ -62,24 +53,14 @@ fun MainScreen(
     onRecreate: () -> Unit,
     onExit: () -> Unit
 ) {
-    val hasMockPermission = remember { MockLocationUtil.isMockEnable(context) }
-    val hasNet = remember { NetworkUtil.isNetAvailable(context) }
+    var currentTab by remember { mutableStateOf(MainTab.HOME) }
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
-    var latestRelease by remember { mutableStateOf<com.vloc.util.ReleaseInfo?>(null) }
+    var latestRelease by remember { mutableStateOf<ReleaseInfo?>(null) }
     var checkingUpdate by remember { mutableStateOf(false) }
-
-    val latLng = vm.selectPoint.collectAsState().value
-    var msg by remember {
-        mutableStateOf("已加载默认位置(${latLng.latitude},${latLng.longitude})")
-    }
-
-    var searchText by remember { mutableStateOf("") }
-    val searchResults = remember { mutableStateListOf<AddressSearchUtil.SearchResult>() }
-    var jumpTarget by remember { mutableStateOf<LatLng?>(null) }
 
     Box(
         modifier = Modifier
@@ -87,144 +68,22 @@ fun MainScreen(
             .safeDrawingPadding()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            if (!hasNet) {
-                Text(
-                    text = "⚠️ 当前网络异常，地图加载失败",
-                    modifier = Modifier.padding(10.dp)
-                )
-            }
-
-            if (!hasMockPermission) {
-                Text(
-                    text = "⚠️ 未获取模拟定位权限，请先在设置中开启",
-                    modifier = Modifier.padding(10.dp),
-                    color = Color.Red
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    color = Color.Black,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = { menuExpanded = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "设置",
-                        tint = Color.Black,
-                        modifier = Modifier.size(28.dp)
+            Box(modifier = Modifier.weight(1f)) {
+                TabPane(visible = currentTab == MainTab.HOME) {
+                    HomeScreen(
+                        vm = vm,
+                        context = context,
+                        visible = currentTab == MainTab.HOME,
+                        onStartMock = onStartMock,
+                        onStopMock = onStopMock
                     )
                 }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) {
-                AMapComposeView(
-                    modifier = Modifier.fillMaxSize(),
-                    initialPosition = vm.selectPoint.collectAsState().value,
-                    jumpToPosition = jumpTarget,
-                    onMapClick = { point ->
-                        vm.updateSelectPoint(point)
-                        GeoCoderUtil.getAddressName(
-                            context, point.latitude, point.longitude
-                        ) { address ->
-                            val latLonStr = "(${point.latitude},${point.longitude})"
-                            msg = address?.let { "已选中：$it$latLonStr" }
-                                ?: "已选中：$latLonStr"
-                        }
-                    }
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.TopCenter)
-                ) {
-                    SearchBar(
-                        searchText = searchText,
-                        onSearchTextChange = { text ->
-                            searchText = text
-                            if (text.isBlank()) {
-                                searchResults.clear()
-                            } else {
-                                AddressSearchUtil.searchAddress(context, text) { results ->
-                                    searchResults.clear()
-                                    searchResults.addAll(results)
-                                }
-                            }
-                        },
-                        searchResults = searchResults,
-                        onSearch = {
-                            if (searchText.isNotBlank()) {
-                                AddressSearchUtil.searchAddress(context, searchText) { results ->
-                                    searchResults.clear()
-                                    searchResults.addAll(results)
-                                }
-                            }
-                        },
-                        onResultClick = { result ->
-                            val selected = result.latLng
-                            vm.updateSelectPoint(selected)
-                            jumpTarget = selected
-                            msg =
-                                "已选中：${result.name}\n(${selected.latitude},${selected.longitude})"
-                            searchText = ""
-                            searchResults.clear()
-                        }
-                    )
+                TabPane(visible = currentTab == MainTab.PROFILE) {
+                    ProfileScreen(onMenuClick = { menuExpanded = true })
                 }
             }
 
-            ActionBar(
-                msg = msg,
-                onStartMock = {
-                    if (!hasNet) {
-                        Toast.makeText(context, "无网络无法使用", Toast.LENGTH_SHORT).show()
-                        return@ActionBar
-                    }
-                    if (!hasMockPermission) {
-                        Toast.makeText(context, "无模拟定位权限，请先开启", Toast.LENGTH_SHORT)
-                            .show()
-                        return@ActionBar
-                    }
-                    val wifiManager =
-                        context.getSystemService(android.content.Context.WIFI_SERVICE) as android.net.wifi.WifiManager
-                    if (wifiManager.isWifiEnabled) {
-                        Toast.makeText(
-                            context,
-                            "请关闭 WiFi！WiFi 会导致定位闪回真实位置",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
-                        return@ActionBar
-                    }
-                    val locationManager =
-                        context.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
-                    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                        Toast.makeText(context, "请开启 GPS 定位服务", Toast.LENGTH_LONG).show()
-                        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                        return@ActionBar
-                    }
-                    val point = vm.selectPoint.value
-                    onStartMock(point.latitude, point.longitude)
-                    msg = "已启动模拟定位(${point.latitude}, ${point.longitude})"
-                },
-                onStopMock = {
-                    onStopMock()
-                    msg = "已停止模拟定位"
-                }
-            )
+            MainBottomBar(selected = currentTab, onSelect = { currentTab = it })
         }
 
         SettingsDrawer(
@@ -241,10 +100,10 @@ fun MainScreen(
             },
             onSetApiKey = { showApiKeyDialog = true },
             onEnableMockPermission = {
-                if (!hasMockPermission) {
-                    MockLocationUtil.goMockSetting(context)
-                } else {
+                if (MockLocationUtil.isMockEnable(context)) {
                     Toast.makeText(context, "已开模拟位置权限", Toast.LENGTH_LONG).show()
+                } else {
+                    MockLocationUtil.goMockSetting(context)
                 }
             },
             onExit = onExit,
@@ -264,7 +123,7 @@ fun MainScreen(
                     label = { Text("API Key") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Text)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                 )
             },
             confirmButton = {
@@ -405,5 +264,43 @@ fun MainScreen(
                 }
             }
         )
+    }
+}
+
+/**
+ * Tab 保活显隐容器：内容始终保留在组合中，仅做可见/不可见切换，
+ * 避免高德 MapView 被销毁重建（重建成本高且会丢失相机/标记状态）。
+ *
+ * 触摸隔离：仅在【隐藏】时为 Box 挂载 pointerInput 兜底消费层，
+ * 消费子级未消费的触摸事件，确保隐藏 Tab 永远不会收到触摸；
+ * 【可见】时不挂载任何消费层——若可见时也消费事件，
+ * Compose 祖先的消费会取消内嵌 MapView 的拖拽/双指缩放手势流。
+ */
+@Composable
+private fun TabPane(
+    visible: Boolean,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .zIndex(if (visible) 1f else -1f)
+            .alpha(if (visible) 1f else 0f)
+            .then(
+                if (visible) {
+                    Modifier
+                } else {
+                    Modifier.pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+                }
+            )
+    ) {
+        content()
     }
 }
