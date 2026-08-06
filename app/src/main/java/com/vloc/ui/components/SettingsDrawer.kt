@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.VpnKey
@@ -45,6 +46,7 @@ fun SettingsDrawer(
     onSaveDefaultLocation: () -> Unit,
     onSetApiKey: () -> Unit,
     onEnableMockPermission: () -> Unit,
+    onShowLog: () -> Unit,
     onExit: () -> Unit,
     onAbout: () -> Unit
 ) {
@@ -136,6 +138,15 @@ fun SettingsDrawer(
                     onClick = {
                         onEnableMockPermission()
                         onDismiss()
+                    }
+                )
+
+                SettingMenuItem(
+                    icon = Icons.AutoMirrored.Filled.ListAlt,
+                    title = "日志",
+                    onClick = {
+                        onDismiss()
+                        onShowLog()
                     }
                 )
 

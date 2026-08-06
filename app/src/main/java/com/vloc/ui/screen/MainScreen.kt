@@ -40,8 +40,8 @@ import com.vloc.util.MockLocationUtil
 import com.vloc.util.ReleaseInfo
 
 /**
- * 主容器：底部「首页 / 我的」双 Tab + 应用级浮层（设置抽屉、弹窗）。
- * 双 Tab 同驻组合、显隐切换，地图等状态在切换时保活。
+ * 主容器：底部「首页 / 工具箱 / 我的」三 Tab + 应用级浮层（设置抽屉、弹窗）。
+ * 三 Tab 同驻组合、显隐切换，地图等状态在切换时保活。
  */
 @Composable
 fun MainScreen(
@@ -57,6 +57,7 @@ fun MainScreen(
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showApiKeyDialog by remember { mutableStateOf(false) }
+    var showLogScreen by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
     var latestRelease by remember { mutableStateOf<ReleaseInfo?>(null) }
@@ -76,6 +77,12 @@ fun MainScreen(
                         visible = currentTab == MainTab.HOME,
                         onStartMock = onStartMock,
                         onStopMock = onStopMock
+                    )
+                }
+                TabPane(visible = currentTab == MainTab.TOOL) {
+                    ToolboxScreen(
+                        visible = currentTab == MainTab.TOOL,
+                        apiKey = savedApiKey
                     )
                 }
                 TabPane(visible = currentTab == MainTab.PROFILE) {
@@ -106,9 +113,15 @@ fun MainScreen(
                     MockLocationUtil.goMockSetting(context)
                 }
             },
+            onShowLog = { showLogScreen = true },
             onExit = onExit,
             onAbout = { showAboutDialog = true }
         )
+
+        // 全屏日志页：置于浮层最上层，覆盖抽屉与 Tab
+        if (showLogScreen) {
+            LogScreen(onClose = { showLogScreen = false })
+        }
     }
 
     if (showApiKeyDialog) {

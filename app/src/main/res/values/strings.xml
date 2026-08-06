@@ -3,4 +3,32 @@
     <string name="author">ian</string>
     <string name="warning_title">温馨提示</string>
     <string name="warning_content">本工具仅供技术学习及LBS应用测试，禁止用于虚假打卡、游戏作弊、虚假定位牟利、欺诈等违规违法场景！！使用产生一切风险与法律后果由使用者自行承担！！</string>
+
+    <!-- 工具箱页 -->
+    <string name="toolbox_title">工具箱</string>
+
+    <!-- 「我的」页功能卡片 -->
+    <string name="profile_compass_title">指南针</string>
+    <string name="profile_altitude_title">海拔</string>
+    <string name="profile_weather_title">天气</string>
+    <string name="profile_feature_in_development">功能开发中</string>
+
+    <!-- 指南针卡片 -->
+    <string name="compass_loading">传感器启动中…</string>
+    <string name="compass_monitoring">实时监测中…</string>
+    <string name="compass_no_sensor">无方向传感器</string>
+
+    <!-- 海拔卡片 -->
+    <string name="altitude_loading">传感器启动中…</string>
+    <string name="altitude_monitoring">实时监测中·标准大气</string>
+    <string name="altitude_monitoring_calibrated">实时监测中·已校准</string>
+    <string name="altitude_no_sensor">无气压/磁场传感器</string>
+
+    <!-- 天气卡片 -->
+    <string name="weather_locating">定位中…</string>
+    <string name="weather_no_key">未配置高德 Key</string>
+    <string name="weather_no_network">网络不可用</string>
+    <string name="weather_no_permission">无定位权限</string>
+    <string name="weather_locate_failed">定位失败</string>
+    <string name="weather_load_failed">加载失败，点击重试</string>
 </resources>

@@ -24,8 +24,10 @@ import androidx.compose.ui.unit.sp
 import com.vloc.R
 
 /**
- * 「我的」页面：顶部标题行（含 ☰ 菜单按钮，打开设置抽屉），
- * 内容区暂为占位，后续承载天气、海拔等扩展功能。
+ * 「我的」页面：顶部标题行（含 ☰ 菜单按钮，打开设置抽屉）。
+ *
+ * 功能卡片（指南针 / 海拔 / 天气）已整体迁移至「工具箱」Tab，
+ * 本页保留设置/关于等应用级入口。
  */
 @Composable
 fun ProfileScreen(
@@ -57,20 +59,6 @@ fun ProfileScreen(
                     modifier = Modifier.size(28.dp)
                 )
             }
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "更多功能（天气、海拔等）敬请期待",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
         }
     }
 }

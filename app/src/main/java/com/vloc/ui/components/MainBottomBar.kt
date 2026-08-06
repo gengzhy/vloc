@@ -1,6 +1,7 @@
 package com.vloc.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AllInbox
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
  */
 enum class MainTab(val title: String, val icon: ImageVector) {
     HOME("首页", Icons.Default.Home),
+    TOOL("工具箱", Icons.Default.AllInbox),
     PROFILE("我的", Icons.Default.Person)
 }
 

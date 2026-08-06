@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import com.amap.api.maps.MapsInitializer
+import com.amap.api.services.core.ServiceSettings
 import com.vloc.model.LocalViewModel
 import com.vloc.service.MockLocationService
 import com.vloc.ui.screen.ApiKeyScreen
@@ -60,6 +61,10 @@ class MainActivity : ComponentActivity() {
 
         MapsInitializer.updatePrivacyShow(this@MainActivity, true, true)
         MapsInitializer.updatePrivacyAgree(this@MainActivity, true)
+
+        // 搜索 SDK（天气/逆地理编码）独立的隐私合规接口，与地图/定位并列，缺一不可
+        ServiceSettings.updatePrivacyShow(this@MainActivity, true, true)
+        ServiceSettings.updatePrivacyAgree(this@MainActivity, true)
 
         setContent {
             var showDisclaimer by remember { mutableStateOf(!vm.isDisclaimerAgreed()) }
