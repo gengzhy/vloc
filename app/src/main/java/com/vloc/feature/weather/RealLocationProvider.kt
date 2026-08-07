@@ -81,7 +81,7 @@ object RealLocationProvider {
             locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
             isOnceLocation = true
             isNeedAddress = true
-            setHttpTimeOut(TIMEOUT_MS)
+            httpTimeOut = TIMEOUT_MS
             isMockEnable = false // 天气取真实位置，忽略模拟定位
         }
         client.setLocationOption(option)

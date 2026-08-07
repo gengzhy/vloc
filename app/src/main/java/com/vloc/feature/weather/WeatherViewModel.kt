@@ -68,9 +68,8 @@ class WeatherViewModel : ViewModel() {
             }
 
             // 定位成功即上报 GPS 海拔，供海拔模块气压校准（与天气查询无关）
-            if (location.altitude != 0.0) {
-                AltitudeCalibration.reportGpsAltitude(location.altitude)
-            }
+            // altitude > 0 表示高德定位返回了有效的GPS海拔
+            AltitudeCalibration.reportGpsAltitude(location.altitude)
 
             // adcode 缺失时降级：仅展示位置，温度占位
             if (location.adcode.isEmpty()) {
