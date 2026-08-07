@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.amap.api.maps.model.LatLng
 import com.vloc.model.LocalViewModel
@@ -55,6 +56,7 @@ fun HomeScreen(
     var searchText by remember { mutableStateOf("") }
     val searchResults = remember { mutableStateListOf<AddressSearchUtil.SearchResult>() }
     var jumpTarget by remember { mutableStateOf<LatLng?>(null) }
+    val focusManager = LocalFocusManager.current
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (!hasNet) {
@@ -83,6 +85,8 @@ fun HomeScreen(
                 jumpToPosition = jumpTarget,
                 visible = visible,
                 onMapClick = { point ->
+                    // 点选地图时让搜索框失焦，自动收回胶囊态并收起键盘
+                    focusManager.clearFocus()
                     vm.updateSelectPoint(point)
                     GeoCoderUtil.getAddressName(
                         context, point.latitude, point.longitude
