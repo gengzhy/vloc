@@ -36,6 +36,7 @@ import com.vloc.ui.components.MainBottomBar
 import com.vloc.ui.components.MainTab
 import com.vloc.ui.components.SettingsDrawer
 import com.vloc.util.AppUpdateUtil
+import com.vloc.util.BackPressOverlay
 import com.vloc.util.MockLocationUtil
 import com.vloc.util.ReleaseInfo
 
@@ -62,6 +63,10 @@ fun MainScreen(
     var showUpdateDialog by remember { mutableStateOf(false) }
     var latestRelease by remember { mutableStateOf<ReleaseInfo?>(null) }
     var checkingUpdate by remember { mutableStateOf(false) }
+
+    // 返回键策略：Activity 层的 setupDoubleBackExit 是全局兜底（双击退出）；
+    // 每个浮层通过 BackPressOverlay 各自拦截返回键关闭自身，
+    // 由系统分发器按「后注册先处理」自动逐层关闭，新增浮层无需改这里。
 
     Box(
         modifier = Modifier
@@ -96,6 +101,7 @@ fun MainScreen(
         SettingsDrawer(
             expanded = menuExpanded,
             onDismiss = { menuExpanded = false },
+            onBackPress = { menuExpanded = false },
             onSaveDefaultLocation = {
                 vm.saveAsDefaultLocation()
                 val point = vm.selectPoint.value
@@ -120,12 +126,15 @@ fun MainScreen(
 
         // 全屏日志页：置于浮层最上层，覆盖抽屉与 Tab
         if (showLogScreen) {
-            LogScreen(onClose = { showLogScreen = false })
+            BackPressOverlay(onBackPress = { showLogScreen = false }) {
+                LogScreen(onClose = { showLogScreen = false })
+            }
         }
     }
 
     if (showApiKeyDialog) {
         var dialogKeyInput by remember { mutableStateOf(savedApiKey) }
+        BackPressOverlay(onBackPress = { showApiKeyDialog = false }) {
         AlertDialog(
             onDismissRequest = { showApiKeyDialog = false },
             title = { Text("设置高德 API Key") },
@@ -158,9 +167,11 @@ fun MainScreen(
                 }
             }
         )
+        }
     }
 
     if (showAboutDialog) {
+        BackPressOverlay(onBackPress = { showAboutDialog = false }) {
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
             title = {
@@ -227,10 +238,12 @@ fun MainScreen(
                 }
             }
         )
+        }
     }
 
     if (showUpdateDialog && latestRelease != null) {
         val release = latestRelease!!
+        BackPressOverlay(onBackPress = { showUpdateDialog = false }) {
         AlertDialog(
             onDismissRequest = { showUpdateDialog = false },
             title = { Text("发现新版本 ${release.tagName}") },
@@ -277,6 +290,7 @@ fun MainScreen(
                 }
             }
         )
+        }
     }
 }
 

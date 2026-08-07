@@ -1,5 +1,6 @@
 package com.vloc.ui.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.sp
 fun SettingsDrawer(
     expanded: Boolean,
     onDismiss: () -> Unit,
+    onBackPress: () -> Unit = onDismiss,
     onSaveDefaultLocation: () -> Unit,
     onSetApiKey: () -> Unit,
     onEnableMockPermission: () -> Unit,
@@ -50,6 +52,9 @@ fun SettingsDrawer(
     onExit: () -> Unit,
     onAbout: () -> Unit
 ) {
+    // 抽屉展开时拦截返回键收起自身；收起后不拦截，返回键穿透到下层
+    BackHandler(enabled = expanded, onBack = onBackPress)
+
     Box(modifier = Modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = expanded,
